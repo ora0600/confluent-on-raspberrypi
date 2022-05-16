@@ -6,4 +6,4 @@
 # all 
 # usage ./99_shutdown_clustersh cpcluster1 cpcluster2 cpcluster3 cpcluster4
 
-for server; do ssh ubuntu@$server 'sudo shutdown -h now; exit'; done
+for server; do ssh -i ~/keys/rpi-key ubuntu@$server 'sudo shutdown -h now; exit'; done
