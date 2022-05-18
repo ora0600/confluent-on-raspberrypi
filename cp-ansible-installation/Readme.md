@@ -28,7 +28,7 @@ Please follow the installation and configuration process for each node:
 
 ## do cp-ansible setup
 My first thinking was to use [Confluent Ansible installer](https://www.confluent.io/installer) but the outcome would be too generic for us. We need a more special setup, because we are doing location, so having up to 3 components on one node.
-That's I developed my own investory file. Please see [host.yml](host.yml) here in our repo.
+That's why I developed my own investory file. Please see [host.yml](host.yml) here in our repo. You need to add your own credentials for AWS and Healt+.
 
 If you need more input reagrding cp-ansible and configuration start here 
 * [sample host.yml](https://github.com/confluentinc/cp-ansible/blob/7.1.1-post/docs/hosts_example.yml)
