@@ -343,4 +343,4 @@ Start cluster run `scripts/98_startup_cluster.sh`
 # Stop Cluster
 Stop Cluster `./99_shutdown_clustersh cpcluster1 cpcluster2 cpcluster3 cpcluster4`
 
-[back](https://github.com/ora0600/confluent-on-rpi)
+[back](https://github.com/ora0600/confluent-on-raspberrypi)
