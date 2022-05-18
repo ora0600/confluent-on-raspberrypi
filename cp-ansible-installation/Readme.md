@@ -5,7 +5,8 @@ Installation setup is shown in following image.
 ![Architecture RPI with CP 7.1](img/cp-on-RPI-architecture.png)
 
 ## SSH Key setup
-on my Mac I do create first a private public key pair. For this you need openSSH Client. Check for your OS how to install it.
+Now, we are working with cp-ansible and it is easier to run ssh with keys, so that we do create first a public key pair on our Mac.
+I do create first a private public key pair. For this you need openSSH Client. Check for your OS how to install it.
 Create the keys:
 ```bash
 ssh-keygen -t rsa -b 4096
@@ -15,11 +16,9 @@ ssh-keygen -t rsa -b 4096
 Now, you will two keys:
 1. rpi-key: this is private key, this key have to stay safe on your desktop
 2. rpi-key.pub: this is the public key. You need to copy the complete content of this file into `.ssh/auhtorized_keys` on your RPI Node.
-
+Then we can do ssk login without password `ssh -i rpi-key ubuntu@cpcluster1`
 ## Raspberry preparation for each Node
-Note: Before we are starting please format with SD Formatter SDCard image
-
-
+Note: Before we are starting please format with SD Formatter SDCard image. If it is a new SDCard you are safe. By the way I am Using the Raspberry PI Imager in the Version 1.6.2 on my Mac. There are also other apps out there. I did also use balenaEtcher in former times.
 
 Please follow the installation and configuration process for each node:
 * [cpcluster1 Node deployment](ReadmeCPCLUSTER1.md)
@@ -28,10 +27,17 @@ Please follow the installation and configuration process for each node:
 * [cpcluster4 Node deployment](ReadmeCPCLUSTER4.md)
 
 ## do cp-ansible setup
-My first thinking was to use [Confluent Ansible installer](https://www.confluent.io/installer) but the outcome was too generic for us.
-So, I developed my own investory file. Please see [host.yml](host.yml)
+My first thinking was to use [Confluent Ansible installer](https://www.confluent.io/installer) but the outcome would be too generic for us. We need a more special setup, because we are doing location, so having up to 3 components on one node.
+That's I developed my own investory file. Please see [host.yml](host.yml) here in our repo.
+
+If you need more input reagrding cp-ansible and configuration start here 
+* [sample host.yml](https://github.com/confluentinc/cp-ansible/blob/7.1.1-post/docs/hosts_example.yml)
+* [Variables description](https://github.com/confluentinc/cp-ansible/blob/7.1.1-post/docs/VARIABLES.md)
+* [dcoumentation](https://docs.confluent.io/ansible/current/overview.html)
+
 ### Steps to run cp-ansile
-Please follow the pre-reqs of Confluent Ansible Installer: ssh, ansible, git, python (v3.x) should be installed on your desktop (I use MacOS).
+Please follow the pre-reqs of Confluent Ansible Installer for your Desktop. We do need some tools on our Desktop: ssh, ansible, git, python (v3.x) should be installed on your desktop (I use MacOS). cp-ansible will be executed via ansible from our Desktop. Ansible is Python program and will do the complete installation and setup. 
+THIS IS REALLY PRETTY COOL (-:)
 Install cp-ansible packages
 ```bash
 ansible-galaxy collection install git+https://github.com/confluentinc/cp-ansible.git
@@ -42,7 +48,7 @@ ansible-playbook -i hosts.yml confluent.platform.all
 # with Debug information run the next command, if you need this for error tracking
 #ansible-playbook -vvv -i hosts.yml confluent.platform.all > failure.txt
 ```
-The outcome shold look like this
+The outcome should look like this
 ```bash
 PLAY RECAP *********************************************************************
 cpcluster1                 : ok=84   changed=5    unreachable=0    failed=0    skipped=80   rescued=0    ignored=0   
@@ -50,8 +56,15 @@ cpcluster2                 : ok=83   changed=5    unreachable=0    failed=0    s
 cpcluster3                 : ok=79   changed=2    unreachable=0    failed=0    skipped=69   rescued=0    ignored=0   
 cpcluster4                 : ok=53   changed=3    unreachable=0    failed=0    skipped=50   rescued=0    ignored=0   
 ```
-Next step should be to check the cluster
-systemD services are `sudo systemctl list-units --type=service`:
+
+The good news: WE ARE FINISHED!
+
+## Check installation and setup
+To become familiar with the cluster we do check the installation.
+Login into the node via `ssh -i rpi-key ubuntu@cpcluster1-4`
+To become root you can do this `sudo -s`
+Logs are here `/var/log/kafka` or `/var/logs/confluent`
+systemD services are visuable via `sudo systemctl list-units --type=service`:
 * cpcluster1: `sudo systemctl status confluent-zookeeper`
 * cpcluster1: `sudo systemctl status confluent-server`
 * cpcluster1: `sudo systemctl status confluent-ksqldb`
@@ -63,55 +76,198 @@ systemD services are `sudo systemctl list-units --type=service`:
 * cpcluster3: `sudo systemctl status confluent-kafka-rest`
 * cpcluster4: `sudo systemctl status confluent-control-center`
 * cpcluster4: `sudo systemctl status confluent-schema-registry` 
-* logs on each node are here `sudo ls /var/log/kafka/*` or `sudo ls /var/log/confluent/*`
+You can also check the service definition file like this one `sudo vi /etc/systemd/system/confluent-ksqldb.service.d/override.conf`
+Confluent binaries are here: `/opt/confluent/confluent-7.1.1/bin/`
+Properties file are found here `/opt/confluent/etc`
 
+# Start each systemD manually
+All Confluent systemD services are enabled and start automatically after boot. But anyway sometimes you have to check status, restart the services. Here is the list of start in order for the complete cluster. You can also use the commands `status|restart|stop`
+* cpcluster1: `sudo systemctl start confluent-zookeeper`
+* cpcluster2: `sudo systemctl start confluent-zookeeper`
+* cpcluster3: `sudo systemctl start confluent-zookeeper`
+* cpcluster1: `sudo systemctl start confluent-server`
+* cpcluster2: `sudo systemctl start confluent-server`
+* cpcluster3: `sudo systemctl start confluent-server`
+* cpcluster4: `sudo systemctl start confluent-schema-registry` 
+* cpcluster3: `sudo systemctl start confluent-kafka-rest`
+* cpcluster2: `sudo systemctl start confluent-kafka-connect`
+* cpcluster1: `sudo systemctl start confluent-ksqldb`
+* cpcluster4: `sudo systemctl start confluent-control-center`
 
+## check the component accessability
 A quick check, if everything is working as expected could be:
 ```bash
+# printout overview of cluster, if kafkacat is not installed, install it please https://docs.confluent.io/platform/current/app-development/kafkacat-usage.html
 kcat -b cpcluster1:9092,cpcluster2:9092,cpcluster3:9092 -L
-
+# check If port are reachable
 nc -vz cpcluster1 9092
 nc -vz cpcluster1 2181
+nc -vz cpcluster1 8079
+nc -vz cpcluster1 8080
+nc -vz cpcluster1 8076
 nc -vz cpcluster2 9092
 nc -vz cpcluster2 2181
+nc -vz cpcluster2 8079
+nc -vz cpcluster2 8080
+nc -vz cpcluster2 8077
+nc -vz cpcluster2 8076
 nc -vz cpcluster3 9092
 nc -vz cpcluster3 2181
-
-#show topics
+nc -vz cpcluster3 8079
+nc -vz cpcluster3 8080
+nc -vz cpcluster3 8075
+nc -vz cpcluster4 8078
+nc -vz cpcluster4 9021
+nc -vz cpcluster1 8090
+nc -vz cpcluster2 8090
+nc -vz cpcluster3 8090
+# show topics
 kafka-topics --bootstrap-server cpcluster1:9092,cpcluster2:9092,cpcluster3:9092 -list
-#create topic
+# create topic
 kafka-topics --bootstrap-server cpcluster1:9092,cpcluster2:9092,cpcluster3:9092 --create --replication-factor 1 --partitions 1 --topic test
 kafka-topics --bootstrap-server cpcluster1:9092,cpcluster2:9092,cpcluster3:9092 --create --replication-factor 3 --partitions 3 --topic testreplica
-
-# check schema
+# check schema registry
 curl http://192.168.178.83:8081
-
 # check connect
 curl http://192.168.178.81:8083
-
 # check ksqldb
 curl http://192.168.178.80:8088/info
-
 # check REST
 curl http://192.168.178.82:8082
-
-# control center or open in Browser
+# control center or open URL in Browser
 curl http://192.168.178.83:9021
+
+# check admin API
+curl --silent -X GET http://192.168.178.80:8090/kafka/v3/clusters/ | jq
+# Check prometheus agent on cpcluster1, should be all clusters
+ssh -i rpi-key ubuntu@cpcluster1
+# check the ports for fmx_exporter Agent
+ps -ef | grep kafka.Kafka | grep javaagent
+#Output: ...jmx_prometheus_javaagent.jar=8080...
+#check endpoint Zookeeper
+curl http://cpcluster1:8079/metrics
+#check endpoint Broker
+curl http://cpcluster1:8080/metrics
+#check endpoint ksqlDB
+curl http://cpcluster1:8076/metrics
 ```
+The Confluent Control Center is running in managed mode, because I do activate the Health+. 
 ![Control Center Overview](img/c3.png)
-
-The monitoring Dashboard for our cluster in Confluent Cloud looks like this:
+Health+ is really an impressive feature. Subscribe to Alerts and you will informaed automatically if your cluster is in bad situation.
+The monitoring Dashboard for our cluster in Confluent Cloud looks like this if you did activate Health+:
 ![Monitoring Dashboard](img/monitoring_dashboard.png)
-The use case for Health+ is really interesting for IoT use case:
-* Decentral Monitoring dashboard for snd level support, without the need of access to cluster, with Alerting
-* keep the footprint on cluster small (we run Control Center in management mode, so big fast KStreams part is not necessary)
 
-If you need to change and create your own inventory file, you can follow this example[example host.yml](https://github.com/confluentinc/cp-ansible/blob/7.1.1-post/docs/hosts_example.yml) and check [documention](https://docs.confluent.io/ansible/current/ansible-install.html)
+The need for Health+ is really interesting for IoT use case:
+* Decentral Monitoring dashboard for 2nd level support, without the need of access to cluster
+* automatic Alerting if something goes wrong
+* keep the footprint on cluster small (we run Control Center in management mode, so big fast KStreams part is not part of your cluster setup anymore)
+
+## Monitoring with Grafana and Prometheus
+Our cluster should work as expected, and is ready also to include this cluster into a Grafana/Prometheus Monitoring system.
+FMY are configired by cp-ansible, fxm exporter Agent form Prometheus was installed on each node. This was done by 
+* In `hosts.yml` I have enabled prometheus
+* cp-ansible will then setup everything for prometheus. 
+* Without cp-ansible the setup would be much more complex. Please follow this [blog post](https://www.confluent.io/blog/monitor-kafka-clusters-with-prometheus-grafana-and-confluent/).
+If you need more input around FMX OPT of JVM instances, see [here](https://docs.confluent.io/platform/current/installation/docker/operations/monitoring.html) and check the `hosts.yml`
+The configuaration file for prometheus [prometheus.yml](prometheus.yml) is stored here in this repo. You need to copy this file to your prometheus host. In my case I use my old iMac from 2011. This is very a sustainable IT setup where I use old hardware.
+
+### Complete setup of Grafana and Prometheus on my iMac
+my iMac is a fresh macOS High Sierra installation. Before starting Grafana/Prometheus we need to install some tools:
+```bash
+# install homebrew from command prompt 
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew help
+# install wget
+brew install wget
+
+# Install Visual Source code for having a good coding tool
+wget https://code.visualstudio.com/Download
+# copy visual code into application dir manually
+
+# install firefox from https://www.mozilla.org/en-US/firefox/mac/
+# we do need firefox because Safari cannot work with prometheus UI
+
+# Unfortunately Docker did not work anymore, I would need macOS 10.14, but have 10.13.6
+
+# install python 3 on macOS, comes with Pythion 2.7
+vi .bashrc
+export PATH="/usr/local/opt/python/libexec/bin:$PATH"
+
+brew install python
+# should python 3
+python --version
+# will launch old version
+python2
+#will launch new version
+python3
+
+# install promethus and Grafana via brew did not work in my case
+
+# Download package from here https://prometheus.io/download/
+wget https://github.com/prometheus/prometheus/releases/download/v2.35.0/prometheus-2.35.0.darwin-amd64.tar.gz
+tar xvf prometheus-2.35.0.darwin-amd64.tar.gz
+rm prometheus-2.35.0.darwin-amd64.tar.gz
+# Create prometheus as systemd later if you want
+mkdir prom_data
+mv prometheus-2.35.0.darwin-amd64/ prometheus/
+cd prometheus/
+
+# alert manager
+wget https://github.com/prometheus/alertmanager/releases/download/v0.24.0/alertmanager-0.24.0.darwin-amd64.tar.gz
+tar xvf alertmanager-0.24.0.darwin-amd64.tar.gz
+cp alertmanager-0.24.0.darwin-amd64/* prometheus/
+rm -rf alertmanager-0.24.0.darwin-amd64
+rm alertmanager-0.24.0.darwin-amd64.tar.gz
+
+# node_exporter
+wget https://github.com/prometheus/node_exporter/releases/download/v1.3.1/node_exporter-1.3.1.darwin-amd64.tar.gz
+tar xvf node_exporter-1.3.1.darwin-amd64.tar.gz
+cp node_exporter-1.3.1.darwin-amd64/* prometheus/
+rm -rf node_exporter-1.3.1.darwin-amd64
+rm node_exporter-1.3.1.darwin-amd64.tar.gz
+
+# copy prometheus.yml from github repo to /Users/admin/prometheus
+cp promethus.yml /Users/admin/prometheus/
+
+# Start prometheus, later you can build a service around this
+/Users/admin/prometheus/prometheus \
+ --config.file /Users/admin/prometheus/prometheus.yml \
+ --storage.tsdb.path /Users/admin/prom_data \
+ --web.console.templates=/Users/admin/prometheus/consoles \
+ --web.console.libraries=/Users/admin/prometheus/console_libraries \
+ --web.enable-lifecycle
+
+# goto to UI and show if it is working
+http://localhost:9090/graph
+http://localhost:9090/metrics
+
+# install Grafana
+wget https://dl.grafana.com/oss/release/grafana-7.1.5.darwin-amd64.tar.gz
+tar xvf grafana-7.1.5.darwin-amd64.tar.gz
+mv grafana-7.1.5 grafana
+rm grafana-7.1.5.darwin-amd64.tar.gz
+cd /Users/admin/grafana/bin
+# Start Grafana
+./grafana-server web
+# confgure Prometheus in Grafana add new datasoruce for prometheus with http://localhost:9090
+# Download all Confluent Dashbaords for Grafana from here https://github.com/confluentinc/jmx-monitoring-stacks/tree/6.1.0-post/jmxexporter-prometheus-grafana/assets/grafana/provisioning/dashboards and import as json upload or use my two dashboards as sample
+# now import all dashboard in Grafana UI Upload JSON
+
+# If you see some errors in Dashboards like a redbanner 
+# you have to edit the panel and choose an appropriate Graog (under visualization)
+```
+There a couple of Dashboards imported. The red Banner Boxes, can be fixed, if you edit the panel and choose a visualization like Graph.
+Th Confluent Overview Dashboard looks like this:
+![Confluent Platform Grafana Dashboard](img/CP_Grafana_Dashboard.png)
+![Kafka Overview](img/kafka_overview.png)
+
+The Grafana Dashboards are not bad, but to be honest I do really like Health+ Monitoring Dashbaord much more.
 
 # Performance Test mit Kakfa perftest tool
 I did run the following perftest for a short check how much powner by 200€ cluster has:
 ```bash
 # create topic
+cd script
 kafka-topics --bootstrap-server 192.168.178.80:9092,192.168.178.81:9092, 192.168.178.82:9092 \
 --create \
 --topic perf-test-rep-three \

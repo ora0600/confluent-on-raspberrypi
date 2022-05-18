@@ -1,0 +1,77 @@
+global:
+  scrape_interval:     1m # By default, scrape targets every 15 seconds.
+  scrape_timeout:      45s # By default, scrape targets every 15 seconds.
+  evaluation_interval: 1m # By default, scrape targets every 15 seconds.
+
+rule_files:
+  - 'alert.rules'
+
+alerting:
+  alertmanagers:
+  - scheme: http
+    static_configs:
+    - targets:
+      - "localhost:9093"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+    - targets: ['localhost:9090']
+
+  - job_name: 'node-exporter'
+    static_configs:
+    - targets: ['localhost:9100']
+
+  - job_name: 'kafka-broker'
+    static_configs:
+    - targets:
+      - 'cpcluster1:8080'
+      - 'cpcluster2:8080'
+      - 'cpcluster3:8080'
+      labels:
+        env: 'dev'
+
+  - job_name: 'zookeeper'
+    static_configs:
+    - targets:
+      - 'cpcluster1:8079'
+      - 'cpcluster2:8079'
+      - 'cpcluster3:8079'
+      labels:
+        env: 'dev'
+
+  - job_name: 'kafka-connect'
+    static_configs:
+      - targets:
+          - 'cpcluster2:8077'
+        labels:
+          env: 'dev'
+          cluster: 'cluster1'
+
+  #- job_name: 'kafka-lag-exporter'
+  #  static_configs:
+  #    - targets:
+  #      - 'kafka-lag-exporter:9999'
+  #      labels:
+  #         env: 'dev'
+  - job_name: "ksqldb"
+    static_configs:
+      - targets:
+          - "cpcluster1:8076"
+        labels:
+          env: "dev"
+
+  - job_name: "rest-proxy"
+    static_configs:
+      - targets:
+          - "cpcluster3:8075"
+        labels:
+          env: "dev"
+
+  - job_name: "schema-registry"
+    static_configs:
+      - targets:
+          - "cpcluster4:8078"
+        labels:
+          env: "dev"
+  

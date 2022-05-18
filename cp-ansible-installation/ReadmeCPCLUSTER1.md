@@ -72,9 +72,8 @@ df- k
 # Memory check
 free
 # now, install main components used by Confluent Platform
-sudo apt-get install openjdk-11-jdk -y
+sudo apt-get install openjdk-11-jdk curl git python3 python3-pip -y
 java -version
-sudo apt-get install -y curl git python3 python3-pip
 python3 --version
 ```
 
@@ -85,8 +84,5 @@ Finally copy the public key first into clipboard and then into cpcluster1 file `
 # login via ssh key
 ssh -i ~/keys/rpi-key ubuntu@cpcluster1
 ```
-
-
-
 
 [back](Readme.md)
