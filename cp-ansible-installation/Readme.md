@@ -5,7 +5,7 @@ Installation setup is shown in following image.
 ![Architecture RPI with CP 7.1](img/cp-on-RPI-architecture.png)
 
 ## SSH Key setup
-Now, we are working with cp-ansible and it is easier to run ssh with keys, so that we do create first a public key pair on our Mac.
+In this lab, we are working with cp-ansible. It is easier to run ssh with keys, so that we do create first a public key pair on our Mac.
 I do create first a private public key pair. For this you need openSSH Client. Check for your OS how to install it.
 Create the keys:
 ```bash
@@ -13,12 +13,12 @@ ssh-keygen -t rsa -b 4096
 # No passphrase
 # Give it a name in my case rpi-key
 ```
-Now, you will two keys:
+You will get two keys:
 1. rpi-key: this is private key, this key have to stay safe on your desktop
 2. rpi-key.pub: this is the public key. You need to copy the complete content of this file into `.ssh/auhtorized_keys` on your RPI Node.
-Then we can do ssk login without password `ssh -i rpi-key ubuntu@cpcluster1`
+Then we can do ssh login without password `ssh -i rpi-key ubuntu@cpcluster1`
 ## Raspberry preparation for each Node
-Note: Before we are starting please format with SD Formatter SDCard image. If it is a new SDCard you are safe. By the way I am Using the Raspberry PI Imager in the Version 1.6.2 on my Mac. There are also other apps out there. I did also use balenaEtcher in former times.
+Note: Before we are starting please format with SD Formatter SDCard image. If it is a new SDCard you are safe. By the way I am using the Raspberry PI Imager in the Version 1.6.2 on my Mac. There are also other apps out there. I did also use balenaEtcher in former times.
 
 Please follow the installation and configuration process for each node:
 * [cpcluster1 Node deployment](ReadmeCPCLUSTER1.md)
@@ -27,22 +27,21 @@ Please follow the installation and configuration process for each node:
 * [cpcluster4 Node deployment](ReadmeCPCLUSTER4.md)
 
 ## do cp-ansible setup
-My first thinking was to use [Confluent Ansible installer](https://www.confluent.io/installer) but the outcome would be too generic for us. We need a more special setup, because we are doing location, so having up to 3 components on one node.
-That's why I developed my own investory file. Please see [host.yml](host.yml) here in our repo. You need to add your own credentials for AWS and Healt+.
+My first thinking was to use [Confluent Ansible installer](https://www.confluent.io/installer) but the outcome would be too generic for us. We need a more special setup, because we are doing co-location. In our case we are running up to 3 Confluent Platform components on one node. If you wan't have co-location, of course the cluster would be faster and it is fit more into Confluent best practice for production deployments.
+That's why I developed my own investory file. Please see [host.yml](host.yml) here in our repo. You need to add your own credentials for AWS and Health+. And if you have a license key, add this key as well.
 
-If you need more input reagrding cp-ansible and configuration start here 
+If you need more input regarding cp-ansible and configuration start here 
 * [sample host.yml](https://github.com/confluentinc/cp-ansible/blob/7.1.1-post/docs/hosts_example.yml)
 * [Variables description](https://github.com/confluentinc/cp-ansible/blob/7.1.1-post/docs/VARIABLES.md)
 * [dcoumentation](https://docs.confluent.io/ansible/current/overview.html)
-
-### Steps to run cp-ansile
-Please follow the pre-reqs of Confluent Ansible Installer for your Desktop. We do need some tools on our Desktop: ssh, ansible, git, python (v3.x) should be installed on your desktop (I use MacOS). cp-ansible will be executed via ansible from our Desktop. Ansible is Python program and will do the complete installation and setup. 
-THIS IS REALLY PRETTY COOL (-:)
-Install cp-ansible packages
+### Steps to run cp-ansible
+Please follow the pre-reqs of Confluent Ansible Installer for your Desktop. We do need some tools on our Desktop: ssh, ansible, git, python (v3.x) should be installed on your desktop (I use MacOS). cp-ansible will be executed via ansible from our Desktop. Ansible is a Python program and will do the complete installation and setup. 
+THIS IS REALLY PRETTY COOL (-:). Configure you setup in hosts.yml and then cp-ansible do the rest for you.
+First, install cp-ansible packages
 ```bash
 ansible-galaxy collection install git+https://github.com/confluentinc/cp-ansible.git
 ```
-Run cp-ansible installation for our RPI cluster
+Second, Run cp-ansible installation for our RPI cluster based on our configuration in `hosts.yml`. Please do not forget the adapt it to your environment.
 ```bash
 ansible-playbook -i hosts.yml confluent.platform.all
 # with Debug information run the next command, if you need this for error tracking
@@ -56,32 +55,41 @@ cpcluster2                 : ok=83   changed=5    unreachable=0    failed=0    s
 cpcluster3                 : ok=79   changed=2    unreachable=0    failed=0    skipped=69   rescued=0    ignored=0   
 cpcluster4                 : ok=53   changed=3    unreachable=0    failed=0    skipped=50   rescued=0    ignored=0   
 ```
+The good news:**WE ARE FINISHED!**
+As you can see, installing Confluent Platform with cp-ansible is really straight forward. The preparation is small, and all the complex stuff is done by cp-ansible including setup fmx_exporter.
 
-The good news: WE ARE FINISHED!
+**You can follow cp-ansible more in detail here:**
+* [Documentation](https://docs.confluent.io/ansible/current/overview.html)
+* [github](https://github.com/confluentinc/cp-ansible): By the way if you have some issues and want to improve something or you miss something, you can of course create an issue or PR in github. This is the fastest way to discuss with cp-ansible developers.
 
-## Check installation and setup
-To become familiar with the cluster we do check the installation.
+#### Check installation and setup
+To become familiar with the cluster we do check the installation manually.
 Login into the node via `ssh -i rpi-key ubuntu@cpcluster1-4`
 To become root you can do this `sudo -s`
 Logs are here `/var/log/kafka` or `/var/logs/confluent`
-systemD services are visuable via `sudo systemctl list-units --type=service`:
-* cpcluster1: `sudo systemctl status confluent-zookeeper`
-* cpcluster1: `sudo systemctl status confluent-server`
-* cpcluster1: `sudo systemctl status confluent-ksqldb`
-* cpcluster2: `sudo systemctl status confluent-zookeeper`
-* cpcluster2: `sudo systemctl status confluent-server`
-* cpcluster2: `sudo systemctl status confluent-kafka-connect`
-* cpcluster3: `sudo systemctl status confluent-zookeeper`
-* cpcluster3: `sudo systemctl status confluent-server`
-* cpcluster3: `sudo systemctl status confluent-kafka-rest`
-* cpcluster4: `sudo systemctl status confluent-control-center`
-* cpcluster4: `sudo systemctl status confluent-schema-registry` 
-You can also check the service definition file like this one `sudo vi /etc/systemd/system/confluent-ksqldb.service.d/override.conf`
+All running systemD services are listed via `sudo systemctl list-units --type=service`
+The Confluent Platform is running these Services om Raspberry PI
+* Status check:
+  * cpcluster1: `sudo systemctl status confluent-zookeeper`
+  * cpcluster1: `sudo systemctl status confluent-server`
+  * cpcluster1: `sudo systemctl status confluent-ksqldb`
+  * cpcluster2: `sudo systemctl status confluent-zookeeper`
+  * cpcluster2: `sudo systemctl status confluent-server`
+  * cpcluster2: `sudo systemctl status confluent-kafka-connect`
+  * cpcluster3: `sudo systemctl status confluent-zookeeper`
+  * cpcluster3: `sudo systemctl status confluent-server`
+  * cpcluster3: `sudo systemctl status confluent-kafka-rest`
+  * cpcluster4: `sudo systemctl status confluent-control-center`
+  * cpcluster4: `sudo systemctl status confluent-schema-registry` 
+
+You can also check the service definition file like this one for ksqlDB `sudo vi /etc/systemd/system/confluent-ksqldb.service.d/override.conf`
+
 Confluent binaries are here: `/opt/confluent/confluent-7.1.1/bin/`
+
 Properties file are found here `/opt/confluent/etc`
 
-# Start each systemD manually
-All Confluent systemD services are enabled and start automatically after boot. But anyway sometimes you have to check status, restart the services. Here is the list of start in order for the complete cluster. You can also use the commands `status|restart|stop`
+#### Start each systemD manually
+All Confluent systemD services are enabled and will start automatically after boot. But anyway, sometimes you have to check status, restart the services. Here is the list of starts in order for the complete cluster. You can also use the commands `status|restart|stop`
 * cpcluster1: `sudo systemctl start confluent-zookeeper`
 * cpcluster2: `sudo systemctl start confluent-zookeeper`
 * cpcluster3: `sudo systemctl start confluent-zookeeper`
@@ -94,7 +102,7 @@ All Confluent systemD services are enabled and start automatically after boot. B
 * cpcluster1: `sudo systemctl start confluent-ksqldb`
 * cpcluster4: `sudo systemctl start confluent-control-center`
 
-## check the component accessability
+#### check the component accessability
 A quick check, if everything is working as expected could be:
 ```bash
 # printout overview of cluster, if kafkacat is not installed, install it please https://docs.confluent.io/platform/current/app-development/kafkacat-usage.html
@@ -137,42 +145,197 @@ curl http://192.168.178.82:8082
 # control center or open URL in Browser
 curl http://192.168.178.83:9021
 
-# check admin API
+# check admin API of cp-server
 curl --silent -X GET http://192.168.178.80:8090/kafka/v3/clusters/ | jq
+
+# Check prometheus
 # Check prometheus agent on cpcluster1, should be all clusters
 ssh -i rpi-key ubuntu@cpcluster1
 # check the ports for fmx_exporter Agent
 ps -ef | grep kafka.Kafka | grep javaagent
 #Output: ...jmx_prometheus_javaagent.jar=8080...
-#check endpoint Zookeeper
+#check endpoint Zookeeper metrics
 curl http://cpcluster1:8079/metrics
-#check endpoint Broker
+#check endpoint Broker  metrics
 curl http://cpcluster1:8080/metrics
-#check endpoint ksqlDB
+#check endpoint ksqlDB  metrics
 curl http://cpcluster1:8076/metrics
+#check endpoint Zookeeper metrics
+curl http://cpcluster2:8079/metrics
+#check endpoint Broker  metrics
+curl http://cpcluster2:8080/metrics
+#check endpoint connect  metrics
+curl http://cpcluster2:8077/metrics
+#check endpoint Zookeeper metrics
+curl http://cpcluster3:8079/metrics
+#check endpoint Broker  metrics
+curl http://cpcluster3:8080/metrics
+#check endpoint Rest Proxy metrics
+curl http://cpcluster3:8075/metrics
+#check endpoint Schema Registry metrics
+curl http://cpcluster3:8078/metrics
 ```
-The Confluent Control Center is running in managed mode, because I do activate the Health+. 
+The Confluent Control Center is running in management mode, because I do activate the Health+. The big and fat Kstreams Client is not running, that keeps our installation footprint small.
 ![Control Center Overview](img/c3.png)
-Health+ is really an impressive feature. Subscribe to Alerts and you will informaed automatically if your cluster is in bad situation.
-The monitoring Dashboard for our cluster in Confluent Cloud looks like this if you did activate Health+:
+Health+ is really an impressive feature. Subscribe to Alerts and you will be informed automatically if your cluster is in bad situation.
+The monitoring Dashboard for our cluster in Confluent Cloud looks like this if you did activate Health+. Here you will find anything you need aorund the Confluent Platform.
 ![Monitoring Dashboard](img/monitoring_dashboard.png)
 
 The need for Health+ is really interesting for IoT use case:
-* Decentral Monitoring dashboard for 2nd level support, without the need of access to cluster
+* Decentral Monitoring dashboard for 2nd level support, without the need of accessing the Confluent Platform cluster
 * automatic Alerting if something goes wrong
 * keep the footprint on cluster small (we run Control Center in management mode, so big fast KStreams part is not part of your cluster setup anymore)
 
 ## Monitoring with Grafana and Prometheus
-Our cluster should work as expected, and is ready also to include this cluster into a Grafana/Prometheus Monitoring system.
-FMY are configired by cp-ansible, fxm exporter Agent form Prometheus was installed on each node. This was done by 
-* In `hosts.yml` I have enabled prometheus
+Our cluster should work as expected. We did enable jmx_exporter in cp-ansible `hosts.yml`
+FMX Ports are configured by cp-ansible and fxm exporter Agent from Prometheus with the property file for the CP components was installed on each node. This was done by enabling this property in hosts.yml `jmxexporter_enabled: true`. So, we are almost fininished to add our Raspberry PI Cluster with Confluent Platform into Prometheus/Grafana deployment.
+* In `hosts.yml` I have enabled prometheus fmx_report
 * cp-ansible will then setup everything for prometheus. 
 * Without cp-ansible the setup would be much more complex. Please follow this [blog post](https://www.confluent.io/blog/monitor-kafka-clusters-with-prometheus-grafana-and-confluent/).
 If you need more input around FMX OPT of JVM instances, see [here](https://docs.confluent.io/platform/current/installation/docker/operations/monitoring.html) and check the `hosts.yml`
 The configuaration file for prometheus [prometheus.yml](prometheus.yml) is stored here in this repo. You need to copy this file to your prometheus host. In my case I use my old iMac from 2011. This is very a sustainable IT setup where I use old hardware.
 
+### Add node_exporter to the RPI Nodes
+I did decide that we do need a Node Monitoring of the Raspberry PI. So, the main objective of running prometheus/grafana is to have a monitoring solution for RPO cluster OS/HW, becaue ethis is not covered by Control Center nore Monitoring Dashboard (Health+). There are some more information out there
+* Prometheus Node_exporter, How to install](https://linuxhit.com/prometheus-node-exporter-on-raspberry-pi-how-to-install/)
+* Grafana Dashboards for [Nodes](https://grafana.com/grafana/dashboards/1860)
+* and a [github project](https://github.com/bhemar/raspberry-metrics) explaining RPI monitoring
+
+Anyway, we will now enable node_exporter and import a Grafana Dashboard. We need to install this manually on all nodes of our cluster
+#### CPCLUSTER1
+enable node_exporter on cpcluster1
+```Bash
+ssh -i ~/keys/rpi-key ubuntu@cpcluster1
+wget https://github.com/prometheus/node_exporter/releases/download/v1.3.1/node_exporter-1.3.1.linux-arm64.tar.gz
+tar xvf node_exporter-1.3.1.linux-arm64.tar.gz
+sudo mv node_exporter-1.3.1.linux-arm64/node_exporter /usr/local/bin 
+rm node_exporter-1.3.1.linux-arm64.tar.gz
+rm -rf node_exporter-1.3.1.linux-arm64/
+sudo useradd -rs /bin/false node_exporter
+# set up systemD
+sudo vi /etc/systemd/system/node_exporter.service
+[Unit]
+Description=Node Exporter
+After=network.target
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+ExecStart=/usr/local/bin/node_exporter
+
+[Install]
+WantedBy=multi-user.target
+
+# Save file
+sudo systemctl daemon-reload 
+sudo systemctl enable node_exporter.service
+sudo systemctl start node_exporter.service
+sudo systemctl status node_exporter.service
+# check metrics
+curl http://cpcluster1:9100/metrics
+```
+#### CPCLUSTER2
+enable node_exporter on cpcluster2
+```Bash
+ssh -i ~/keys/rpi-key ubuntu@cpcluster2
+wget https://github.com/prometheus/node_exporter/releases/download/v1.3.1/node_exporter-1.3.1.linux-arm64.tar.gz
+tar xvf node_exporter-1.3.1.linux-arm64.tar.gz
+sudo mv node_exporter-1.3.1.linux-arm64/node_exporter /usr/local/bin 
+rm node_exporter-1.3.1.linux-arm64.tar.gz
+rm -rf node_exporter-1.3.1.linux-arm64/
+sudo useradd -rs /bin/false node_exporter
+# set up systemD
+sudo vi /etc/systemd/system/node_exporter.service
+[Unit]
+Description=Node Exporter
+After=network.target
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+ExecStart=/usr/local/bin/node_exporter
+
+[Install]
+WantedBy=multi-user.target
+
+# Save file
+sudo systemctl daemon-reload 
+sudo systemctl enable node_exporter.service
+sudo systemctl start node_exporter.service
+sudo systemctl status node_exporter.service
+# check metrics
+curl http://cpcluster2:9100/metrics
+```
+#### CPCLUSTER3
+enable node_exporter on cpcluster3
+```Bash
+ssh -i ~/keys/rpi-key ubuntu@cpcluster3
+wget https://github.com/prometheus/node_exporter/releases/download/v1.3.1/node_exporter-1.3.1.linux-arm64.tar.gz
+tar xvf node_exporter-1.3.1.linux-arm64.tar.gz
+sudo mv node_exporter-1.3.1.linux-arm64/node_exporter /usr/local/bin 
+rm node_exporter-1.3.1.linux-arm64.tar.gz
+rm -rf node_exporter-1.3.1.linux-arm64/
+sudo useradd -rs /bin/false node_exporter
+# set up systemD
+sudo vi /etc/systemd/system/node_exporter.service
+[Unit]
+Description=Node Exporter
+After=network.target
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+ExecStart=/usr/local/bin/node_exporter
+
+[Install]
+WantedBy=multi-user.target
+
+# Save file
+sudo systemctl daemon-reload 
+sudo systemctl enable node_exporter.service
+sudo systemctl start node_exporter.service
+sudo systemctl status node_exporter.service
+# check metrics
+curl http://cpcluster3:9100/metrics
+```
+#### CPCLUSTER4
+enable node_exporter on cpcluster4
+```Bash
+ssh -i ~/keys/rpi-key ubuntu@cpcluster4
+wget https://github.com/prometheus/node_exporter/releases/download/v1.3.1/node_exporter-1.3.1.linux-arm64.tar.gz
+tar xvf node_exporter-1.3.1.linux-arm64.tar.gz
+sudo mv node_exporter-1.3.1.linux-arm64/node_exporter /usr/local/bin 
+rm node_exporter-1.3.1.linux-arm64.tar.gz
+rm -rf node_exporter-1.3.1.linux-arm64/
+sudo useradd -rs /bin/false node_exporter
+# set up systemD
+sudo vi /etc/systemd/system/node_exporter.service
+[Unit]
+Description=Node Exporter
+After=network.target
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+ExecStart=/usr/local/bin/node_exporter
+
+[Install]
+WantedBy=multi-user.target
+
+# Save file
+sudo systemctl daemon-reload 
+sudo systemctl enable node_exporter.service
+sudo systemctl start node_exporter.service
+sudo systemctl status node_exporter.service
+# check metrics
+curl http://cpcluster4:9100/metrics
+```
 ### Complete setup of Grafana and Prometheus on my iMac
-my iMac is a fresh macOS High Sierra installation. Before starting Grafana/Prometheus we need to install some tools:
+my iMac is a fresh macOS High Sierra installation. Before starting with Grafana/Prometheus we need to install some tools:
 ```bash
 # install homebrew from command prompt 
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -202,7 +365,6 @@ python2
 python3
 
 # install promethus and Grafana via brew did not work in my case
-
 # Download package from here https://prometheus.io/download/
 wget https://github.com/prometheus/prometheus/releases/download/v2.35.0/prometheus-2.35.0.darwin-amd64.tar.gz
 tar xvf prometheus-2.35.0.darwin-amd64.tar.gz
@@ -240,6 +402,7 @@ cp promethus.yml /Users/admin/prometheus/
 # goto to UI and show if it is working
 http://localhost:9090/graph
 http://localhost:9090/metrics
+http://localhost:9090/targets
 
 # install Grafana
 wget https://dl.grafana.com/oss/release/grafana-7.1.5.darwin-amd64.tar.gz
@@ -249,22 +412,26 @@ rm grafana-7.1.5.darwin-amd64.tar.gz
 cd /Users/admin/grafana/bin
 # Start Grafana
 ./grafana-server web
-# confgure Prometheus in Grafana add new datasoruce for prometheus with http://localhost:9090
-# Download all Confluent Dashbaords for Grafana from here https://github.com/confluentinc/jmx-monitoring-stacks/tree/6.1.0-post/jmxexporter-prometheus-grafana/assets/grafana/provisioning/dashboards and import as json upload or use my two dashboards as sample
-# now import all dashboard in Grafana UI Upload JSON
-
-# If you see some errors in Dashboards like a redbanner 
-# you have to edit the panel and choose an appropriate Graog (under visualization)
 ```
-There a couple of Dashboards imported. The red Banner Boxes, can be fixed, if you edit the panel and choose a visualization like Graph.
-Th Confluent Overview Dashboard looks like this:
+Now, you need to configure Prometheus in Grafana as new datasource for prometheus with http://localhost:9090
+I did prepare three Dashbaords, you can import them via Grafana UI Upload JSON.
+You will find the Dashboards [here](https://github.com/ora0600/confluent-on-raspberrypi/tree/main/cp-ansible-installation/grafana-dashboard)
+There are couple of Dashboards out there. If you need more, please google for it. Confluent did offer more [Dashboards for Grafana](https://github.com/confluentinc/jmx-monitoring-stacks/tree/6.1.0-post/jmxexporter-prometheus-grafana/assets/grafana/provisioning/dashboards)
+Im my case I use three Dashboard. 2 Dashboard around Confluent Platform, and you will see, we do not need them because we do have Monitoring Dashboard from Health+. And a third one 
+which show OS and HW Metrics of our cluster. This is quite useful:
+
+Kafka Overview Dashboard
+![Confluent Platform Grafana Dashboard](img/kafka_overview_Dashboard.png)
+Confluent Platform Overview, not deployed in my Grafana
 ![Confluent Platform Grafana Dashboard](img/CP_Grafana_Dashboard.png)
-![Kafka Overview](img/kafka_overview.png)
+Zookeeper Cluster
+![Zookeeper Overview](img/zookeeper.png)
+Raspberry PI Cluster
+![Raspberry PI Cluster](img/raspberry_pi_cluster.png)
 
-The Grafana Dashboards are not bad, but to be honest I do really like Health+ Monitoring Dashbaord much more.
-
-# Performance Test mit Kakfa perftest tool
-I did run the following perftest for a short check how much powner by 200€ cluster has:
+My personally recommendation for everything around Confluent Platform is **use Monitoring Dashboard from Healt+**. Here you can drill-down and have a complete view including alerting.
+# Performance Test mit Kafka perftest tool
+I did run the following perftest for a short check how much power our 250€ cluster has:
 ```bash
 # create topic
 cd script

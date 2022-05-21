@@ -14,9 +14,8 @@ Please follow the installation and configuration process for each node:
 * [cpcluster4 Node deployment](ReadmeCPCLUSTER4.md)
 
 Start cluster run `scripts/98_startup_cluster.sh`
-
-# Performance Test mit Kakfa perftest tool
-I did run the following perftest for a short check how much powner by 200€ cluster has:
+# Performance Test mit Kafka perftest tool
+I did run the following perftest for a short check how much power our 250€ cluster has:
 ```bash
 # create topic
 kafka-topics --bootstrap-server 192.168.178.80:9092,192.168.178.81:9092, 192.168.178.82:9092 \
