@@ -504,12 +504,20 @@ The result is not too bad for such a small cluster, but less than manual setup (
 38272 records sent, 7651.3 records/sec (7.30 MB/sec), 5397.3 ms avg latency, 7818.0 ms max latency.
 ```
 The performance is more or less the same. But with tiered storage we do need much disk space on the broker.
-
+# Run producer and consumer to bring some load on the cluser
+We do bring sdeom load on the cluster. Forst create an avro topic.
+```bash
+scripts/00_start_clients.sh
+```
+This script will start 2 terminal session (iterm) and produce and consume avro sample data.
 # Start cluster
 via the systemD services the cluster will be started automatically, you do not need run the following script.
 Start cluster run `scripts/98_startup_cluster.sh`
 
+or start only CP components via `scripts/98_start_cpcluster.sh`
+
 # Stop Cluster
-Stop Cluster `./99_shutdown_clustersh cpcluster1 cpcluster2 cpcluster3 cpcluster4`
+First stop CP components  `./99_stop_cpcluster.sh`
+then Stop Cluster `./99_shutdown_cluster.sh cpcluster1 cpcluster2 cpcluster3 cpcluster4`
 
 [back](https://github.com/ora0600/confluent-on-raspberrypi)
