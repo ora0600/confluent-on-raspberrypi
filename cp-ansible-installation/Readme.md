@@ -177,26 +177,26 @@ curl http://cpcluster3:8078/metrics
 ```
 The Confluent Control Center is running in management mode, because I do activate the Health+. The big and fat Kstreams Client is not running, that keeps our installation footprint small.
 ![Control Center Overview](img/c3.png)
-Health+ is really an impressive feature. Subscribe to Alerts and you will be informed automatically if your cluster is in bad situation.
-The monitoring Dashboard for our cluster in Confluent Cloud looks like this if you did activate Health+. Here you will find anything you need aorund the Confluent Platform.
+Health+ is really an impressive feature. Subscribe to intelligent alerts and you will be informed automatically if your RPI cluster is in bad situation.
+The monitoring Dashboard for the RPI cluster in Confluent Cloud looks like the next graphic if you activate Health+. Here you will find anything you need aorund the Confluent Platform.
 ![Monitoring Dashboard](img/monitoring_dashboard.png)
 
 The need for Health+ is really interesting for IoT use case:
 * Decentral Monitoring dashboard for 2nd level support, without the need of accessing the Confluent Platform cluster
-* automatic Alerting if something goes wrong
-* keep the footprint on cluster small (we run Control Center in management mode, so big fast KStreams part is not part of your cluster setup anymore)
+* automatic Alerting when something goes wrong
+* keep the footprint on the RPI cluster small (we run Control Center in management mode, so big fast KStreams part is not part of your cluster setup anymore)
 
 ## Monitoring with Grafana and Prometheus
-Our cluster should work as expected. We did enable jmx_exporter in cp-ansible `hosts.yml`
-FMX Ports are configured by cp-ansible and fxm exporter Agent from Prometheus with the property file for the CP components was installed on each node. This was done by enabling this property in hosts.yml `jmxexporter_enabled: true`. So, we are almost fininished to add our Raspberry PI Cluster with Confluent Platform into Prometheus/Grafana deployment.
-* In `hosts.yml` I have enabled prometheus fmx_report
+Our cluster should work as expected. We did enable jmx_exporter in cp-ansible `hosts.yml`.
+FMX Ports are configured by cp-ansible and jmx_exporter Agent from Prometheus with the property file for the CP components was installed on each node by cp-ansible. This was done by enabling this property `jmxexporter_enabled: true` in hosts.yml . So, we are almost fininished to add our Raspberry PI Cluster with Confluent Platform into Prometheus/Grafana deployment.
+* In `hosts.yml` I have enabled prometheus jmxexporter
 * cp-ansible will then setup everything for prometheus. 
 * Without cp-ansible the setup would be much more complex. Please follow this [blog post](https://www.confluent.io/blog/monitor-kafka-clusters-with-prometheus-grafana-and-confluent/).
-If you need more input around FMX OPT of JVM instances, see [here](https://docs.confluent.io/platform/current/installation/docker/operations/monitoring.html) and check the `hosts.yml`
-The configuaration file for prometheus [prometheus.yml](prometheus.yml) is stored here in this repo. You need to copy this file to your prometheus host. In my case I use my old iMac from 2011. This is very a sustainable IT setup where I use old hardware.
+If you need more input around FMX OPT of JVM instances, see [here](https://docs.confluent.io/platform/current/installation/docker/operations/monitoring.html) and check the `hosts.yml`.
+The configuaration file for prometheus [prometheus.yml](prometheus.yml) is stored here in this repo. You need to copy this file to your prometheus host. In my case I use my old iMac from 2011.
 
 ### Add node_exporter to the RPI Nodes
-I did decide that we do need a Node Monitoring of the Raspberry PI. So, the main objective of running prometheus/grafana is to have a monitoring solution for RPO cluster OS/HW, becaue ethis is not covered by Control Center nore Monitoring Dashboard (Health+). There are some more information out there
+I did decide that we do need a Node Monitoring of the Raspberry PI. So, the main objective of running prometheus/grafana is to have a monitoring solution for RPI cluster OS/HW, because this kind of monitoring is not covered by Control Center nore Monitoring Dashboard (Health+). Please follow more detailed information around this ith next link list
 * Prometheus Node_exporter, How to install](https://linuxhit.com/prometheus-node-exporter-on-raspberry-pi-how-to-install/)
 * Grafana Dashboards for [Nodes](https://grafana.com/grafana/dashboards/1860)
 * and a [github project](https://github.com/bhemar/raspberry-metrics) explaining RPI monitoring
@@ -481,6 +481,8 @@ kafka-topics --bootstrap-server 192.168.178.80:9092,192.168.178.81:9092, 192.168
 --config confluent.tier.local.hotset.ms=60000 \
 --config retention.ms=1800000
 # run perf test
+# Depending which Version of Cp you are running or your desktop
+export CLASSPATH=$CONFLUENT_HOME/share/java/monitoring-interceptors/monitoring-interceptors-7.0.1.jar
 kafka-producer-perf-test \
 --topic tieredstoragetopic \
 --producer.config ./client.config \
