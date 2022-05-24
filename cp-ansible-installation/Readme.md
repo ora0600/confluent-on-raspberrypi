@@ -511,13 +511,24 @@ scripts/00_start_clients.sh
 ```
 This script will start 2 terminal session (iterm) and produce and consume avro sample data.
 # Start cluster
-via the systemD services the cluster will be started automatically, you do not need run the following script.
-Start cluster run `scripts/98_startup_cluster.sh`
-
-or start only CP components via `scripts/98_start_cpcluster.sh`
-
+Start only CP components via `scripts/98_start_cpcluster.sh`
 # Stop Cluster
 First stop CP components  `./99_stop_cpcluster.sh`
 then Stop Cluster `./99_shutdown_cluster.sh cpcluster1 cpcluster2 cpcluster3 cpcluster4`
+# Clean Cluster
+During play around with deployment etc. it is sometimes necessary to clean the cluster. For this I put a script into that repo. Start cleaning
+```bash
+scripts/99_clean_cpcluster.sh
+```
+After cleaning you can deploy Confluent Platform via cp-ansible and will have a fresh and clean installation:
+```bash
+ansible-playbook -i hosts.yml confluent.platform.all
+```
+# Hint: re-configure
+I did make an error in connect setup in `hosts.yml`. I changed my error. And then I need to run a re-configure. This can be done via
+```bash
+# Run cp-ansible only for connect cluster
+ansible-playbook -i hosts.yml confluent.platform.all   --tags kafka_connect
+```
 
 [back](https://github.com/ora0600/confluent-on-raspberrypi)
