@@ -431,7 +431,7 @@ Zookeeper Cluster
 Raspberry PI Cluster
 ![Raspberry PI Cluster](img/raspberry_pi_cluster.png)
 
-My personally recommendation for everything around Confluent Platform is **use Monitoring Dashboard from Healt+**. Here you can drill-down and have a complete view including alerting.
+My personally recommendation for everything around Confluent Platform is **use Monitoring Dashboard from Health+**. Here you can drill-down and have a complete view including alerting.
 # Performance Test mit Kafka perftest tool
 I did run the following perftest for a short check how much power our 250€ cluster has:
 ```bash
