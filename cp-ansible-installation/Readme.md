@@ -88,6 +88,8 @@ Confluent binaries are here: `/opt/confluent/confluent-7.1.1/bin/`
 
 Properties file are found here `/opt/confluent/etc`
 
+Logs are in /var/log/kafka or var/logs/confluent
+
 #### Start each systemD manually
 All Confluent systemD services are enabled and will start automatically after boot. But anyway, sometimes you have to check status, restart the services. Here is the list of starts in order for the complete cluster. You can also use the commands `status|restart|stop`
 * cpcluster1: `sudo systemctl start confluent-zookeeper`
