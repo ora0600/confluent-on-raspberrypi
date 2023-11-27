@@ -532,5 +532,8 @@ I did make an error in connect setup in `hosts.yml`. I changed my error. And the
 # Run cp-ansible only for connect cluster
 ansible-playbook -i hosts.yml confluent.platform.all   --tags kafka_connect
 ```
+# Upgrade to verion 7.5.2 of Confluent Platform
+This explained cluster here is running on CP 7.1.0.
+To upgrade to 7.5.2 of Confluent Platform please follow this [guide](update2CP7.5.2.md)
 
 [back](https://github.com/ora0600/confluent-on-raspberrypi)
