@@ -36,7 +36,7 @@ we will use the following software to run the cluster on Raspberry PIs
 * Ubuntu OS
 * openJDK: Java 11
 * Python 3
-* Confluent Platform 7.1 (Upgrade to CP 7.5.2 is covered [here](cp-ansible-installation/update2CP7.5.2.md)
+* Confluent Platform 7.1 (Upgrade to CP 7.5.2 is covered [here](cp-ansible-installation/update2CP7.5.2.md))
 * Confluent cli
 
 # Hardware
